@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request,jsonify
 from flask_sqlalchemy import SQLAlchemy
 
 #mysql配置 
@@ -12,16 +12,16 @@ db = SQLAlchemy(app)
 
 from app import db
 
-class User(db.Modle):
+class Employee(db.Modle):
     gh = db.Column(db.String(20),primary_key = True)
-    xm = db.Column(db.String(),nullable = True)
-    bmdm = db.Column(db.String,nullable = True)
-    bmcc = db.Column(db.String,nullable = True)
-    dwh = db.Column(db.String,nullable = True)
-    dwmc = db.Column(db.String,nullable = True)
-    ryztm = db.Column(db.String,nullable = True)
-    ryztm_mc = db.Column(db.String,nullable = True)
-    lxdh = db.Column(db.String,nullable = True)
+    xm = db.Column(db.String(10),nullable = True)
+    bmdm = db.Column(db.String(20),nullable = True)
+    bmcc = db.Column(db.String(20),nullable = True)
+    dwh = db.Column(db.String(20),nullable = True)
+    dwmc = db.Column(db.String(20),nullable = True)
+    ryztm = db.Column(db.String(20),nullable = True)
+    ryztm_mc = db.Column(db.String(20),nullable = True)
+    lxdh = db.Column(db.String(20),nullable = True)
 
 
 
@@ -36,7 +36,20 @@ def get_employee_data():
         return jsonify({"error": "Authentication failed"}), 401
     
     # 查询数据库并构造响应
-    
+    employees = Employee.query.all()
+    result = []
+    for employee in employees:
+        result.append({
+            "gh": employee.gh,
+            "xm": employee.xm,
+            "bmdm": employee.bmdm,
+            "bmmc": employee.bmmc,
+            "dwh": employee.dwh,
+            "dwmc": employee.dwmc,
+            "ryztm": employee.ryztm,
+            "ryztm_mc": employee.ryztm_mc,
+            "lxdh": employee.lxdh
+        })
     
     return jsonify(result)
 
