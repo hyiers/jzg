@@ -24,6 +24,7 @@ class User(db.Modle):
     lxdh = db.Column(db.String,nullable = True)
 
 
+
 db.create_all()
 
 @app.route('/9044143925417/data_center/dwd/gxjg/jzgjcsj', methods=['GET'])              #使用装饰器url配置    访问：   IP：port/
