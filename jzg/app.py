@@ -12,8 +12,8 @@ db = SQLAlchemy(app)
 
 from app import db
 
-class Employee(db.Modle):
-    gh = db.Column(db.String(20),primary_key = True)
+class Employee(db.Model):
+    gh = db.Column(db.String(20),nullable = True)
     xm = db.Column(db.String(10),nullable = True)
     bmdm = db.Column(db.String(20),nullable = True)
     bmcc = db.Column(db.String(20),nullable = True)
@@ -27,7 +27,7 @@ class Employee(db.Modle):
 
 db.create_all()
 
-@app.route('/9044143925417/data_center/dwd/gxjg/jzgjcsj', methods=['GET'])              #使用装饰器url配置    访问：   IP：port/
+@app.route('/9044143925417/data_center/dwd/gxjg/jzgjcsj', methods=['GET'])              #使用装饰器url配置    访问：   
 def get_employee_data():           
     # 静态Token验证
     x_h3c_id = request.headers.get('X-H3C-ID')    
