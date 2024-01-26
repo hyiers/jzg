@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, json
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -39,8 +39,14 @@ def get_employee_data():
             "ryztm_mc": employee.ryztm_mc,
             "lxdh": employee.lxdh
         })
+    print(result)
 
-    return jsonify(result)
+    # 使用 json.dumps，ensure_ascii=False 以及 sort_keys=False 以保持原始顺序
+    return app.response_class(
+        response=json.dumps(result, ensure_ascii=False, sort_keys=False),
+        status=200,
+        mimetype='application/json'
+    )
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=33027, debug=True)

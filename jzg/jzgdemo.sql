@@ -1,0 +1,1 @@
+INSERT INTO employee (id, gh, xm, bmdm, bmcc, dwh, dwmc, ryztm, ryztm_mc, lxdh) VALUES ('1', '12','zs', '123', '1234', '12345', '123456', '1234567', '12345678', '123456789');
