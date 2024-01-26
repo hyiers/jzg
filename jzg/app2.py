@@ -23,15 +23,8 @@ class Employee(db.Model):
 with app.app_context():
     db.create_all()
 
-@app.route('/9044143925417/data_center/dwd/gxjg/jzgjcsj', methods=['GET'])
+@app.route('/selectData', methods=['GET'])
 def get_employee_data():
-    # 静态Token验证
-    x_h3c_id = request.headers.get('X-H3C-ID')
-    x_h3c_appkey = request.headers.get('X-H3C-APPKEY')
-    if x_h3c_id != "9044143925417" and x_h3c_appkey != "sakvxb36":
-        return jsonify({"error": "Authentication failed"}), 401
-
-    # 查询数据库并构造响应
     employees = Employee.query.all()
     result = []
     for employee in employees:
@@ -39,7 +32,7 @@ def get_employee_data():
             "gh": employee.gh,
             "xm": employee.xm,
             "bmdm": employee.bmdm,
-            "bmmc": employee.bmmc,  
+            "bmcc": employee.bmcc,  
             "dwh": employee.dwh,
             "dwmc": employee.dwmc,
             "ryztm": employee.ryztm,
