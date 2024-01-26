@@ -37,13 +37,9 @@ class User(Base):
     # update_time = Column(String(20), nullable=False, default=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
     #                      onupdate=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     # comment = Column(String(200))
-    def keys(self):
-        return ('id','name','age')
- 
-    def __getitem__(self, item):
-        return getattr(self, item)
- 
- 
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'age': self.age}
+    
 # 初始化数据库连接:
 engine = create_engine('postgresql://postgres:123456@localhost:5432/mydata')  # 用户名:密码@localhost:端口/数据库名
  
@@ -75,15 +71,18 @@ def insertLiData():
     # 创建会话
     session = DBSession()
     # 创建新User对象:
-    # local_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    new_user = User(id=4,name='lisi', age=26)
+    new_user = User(id=4, name='lisi', age=26)
     # 添加到session:
     session.add(new_user)
     # 提交即保存到数据库:
     session.commit()
+    # 通过新的会话获取已插入的用户，避免DetachedInstanceError
+    inserted_user = session.query(User).get(new_user.id)
     # 关闭session:
     session.close()
-    return "ok"
+    
+    return jsonify(inserted_user.to_dict())
+
 @app.route('/selectData', methods=['GET']) 
 def selectData():
     # 查询操作
