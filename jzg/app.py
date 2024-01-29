@@ -1,7 +1,5 @@
-import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, json
 from flask_sqlalchemy import SQLAlchemy
-import psycopg2
 
 
 app = Flask(__name__)
@@ -27,13 +25,15 @@ with app.app_context():
     db.create_all()
 
 @app.route('/9044143925417/data_center/dwd/gxjg/jzgjcsj', methods=['GET'])
-
 def get_employee_data():
     auth_id = request.headers.get('X-H3C-ID')
     auth_key = request.headers.get('X-H3C-APPKEY')
 
     if auth_id != "9044143925417" or auth_key != "sakvxb36":
+        print("Authentication failed")
         return jsonify({"error": "Authentication failed"}), 401
+    
+
     employees = Employee.query.all()
     result = []
     for employee in employees:
@@ -41,16 +41,15 @@ def get_employee_data():
             "gh": employee.gh,
             "xm": employee.xm,
             "bmdm": employee.bmdm,
-            "bmcc": employee.bmcc,  
+            "bmcc": employee.bmcc,
             "dwh": employee.dwh,
             "dwmc": employee.dwmc,
             "ryztm": employee.ryztm,
             "ryztm_mc": employee.ryztm_mc,
             "lxdh": employee.lxdh
         })
-    print(result)
 
-    # 使用 json.dumps，ensure_ascii=False 以及 sort_keys=False 以保持原始顺序
+    print("Authentication successful")
     return app.response_class(
         response=json.dumps(result, ensure_ascii=False, sort_keys=False),
         status=200,
