@@ -10,11 +10,10 @@ db = SQLAlchemy(app)
 
 class Employee(db.Model):
     __tablename__ = 'employee'
-    id = db.Column(db.Integer, primary_key=True)
-    gh = db.Column(db.String(20), nullable=True)
+    gh = db.Column(db.String(20), primary_key=True)
     xm = db.Column(db.String(10), nullable=True)
     bmdm = db.Column(db.String(20), nullable=True)
-    bmcc = db.Column(db.String(20), nullable=True)
+    bmmc = db.Column(db.String(20), nullable=True)
     dwh = db.Column(db.String(20), nullable=True)
     dwmc = db.Column(db.String(20), nullable=True)
     ryztm = db.Column(db.String(20), nullable=True)
@@ -41,7 +40,7 @@ def get_employee_data():
             "gh": employee.gh,
             "xm": employee.xm,
             "bmdm": employee.bmdm,
-            "bmcc": employee.bmcc,
+            "bmmc": employee.bmmc,
             "dwh": employee.dwh,
             "dwmc": employee.dwmc,
             "ryztm": employee.ryztm,
