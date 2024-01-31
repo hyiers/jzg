@@ -17,13 +17,13 @@ class person(db.Model):
     __tablename__ = 'person'
     personname = db.Column(db.String, primary_key=True)
     gender = db.Column(db.String, nullable=True)
-    orgIndexCode = db.Column(db.String, nullable=True)
+    orgindexcode = db.Column(db.String, nullable=True)
     birthday = db.Column(db.String, nullable=True)
-    phoneNo = db.Column(db.String, nullable=True)
+    phoneno = db.Column(db.String, nullable=True)
     email = db.Column(db.String, nullable=True)
-    certificateType = db.Column(db.String, nullable=True)
-    certificateNo = db.Column(db.String, nullable=True)
-    jobNo = db.Column(db.String, nullable=True)
+    certificatetype = db.Column(db.String, nullable=True)
+    certificateno = db.Column(db.String, nullable=True)
+    jobno = db.Column(db.String, nullable=True)
     faces = db.Column(db.String, nullable=True)
 
 with app.app_context():
@@ -40,6 +40,25 @@ def sign(key, value):
 
 @app.route(api_add_person_url, methods=['POST'])
 def add_person():
+    x_ca_nonce = str(uuid.uuid4())
+    x_ca_timestamp = str(int(round(time.time()) * 1000))
+    sign_str = f"POST\n*/*\napplication/json\nx-ca-key:{appKey}\nx-ca-nonce:{x_ca_nonce}\nx-ca-timestamp:{x_ca_timestamp}\n{api_add_person_url}"
+    signature = sign(appSecret, sign_str)
+    
+    Accept = request.headers.get('Accept')
+    ContentType = request.headers.get('Content-Type')
+    xcakey = request.headers.get('x-ca-key')
+    xcasignatureheaders = request.headers.get('x-ca-signature-headers')
+    xcasignature = request.headers.get('x-ca-signature')
+    xcatimestamp = request.headers.get('x-ca-timestamp')
+    xcanonce = request.headers.get('x-ca-nonce')
+
+    
+
+
+    if auth_id != "9044143925417" or auth_key != "sakvxb36":
+        print("Authentication failed")
+        return jsonify({"error": "Authentication failed"}), 401
     try:
         x_ca_nonce = str(uuid.uuid4())
         x_ca_timestamp = str(int(round(time.time()) * 1000))
@@ -68,7 +87,7 @@ def add_person():
         }
 
         # 发送请求
-        response = requests.post(base_url + api_add_person_url, json=request_data, headers=headers)
+        response = requests.post(base_url + ":5001" + api_add_person_url, json=request_data, headers=headers)
 
         # 解析响应并返回给客户端
         
@@ -79,4 +98,5 @@ def add_person():
         return jsonify({"error": str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
+
