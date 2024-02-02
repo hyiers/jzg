@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:123456@localhost:5432/pt"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 db = SQLAlchemy(app)
-
+#创建，链接连个数据库
 class person(db.Model):
     __tablename__ = 'person'
     personid = db.Column(db.String, primary_key=True)
@@ -39,63 +39,20 @@ class Org(db.Model):
 with app.app_context():
     db.create_all()
 
-
+#使用的AS，URL
 appSecret = "GSCOsNc7EMA61FfjE"
 api_add_person_url = "/api/resource/v2/person/single/add"
 api_origin_url = "/api/resource/v1/org/rootOrg"
-
+#时间戳等信息
 x_ca_nonce = str(uuid.uuid4())
 x_ca_timestamp = str(int(round(time.time()) * 1000))
-
+#定义签名生成方式
 def sign(key, value):
     temp = hmac.new(key.encode(), value.encode(), digestmod=hashlib.sha256)
     return base64.b64encode(temp.digest()).decode()
 
-def simulate_api_request():
-    existing_person = person.query.all()
-    appKey = "22932116"
-    
-    # Get orgIndexCode from the /api/resource/v1/org/rootOrg endpoint
-    org_index_code = get_org_index_code()
 
-    if org_index_code is None:
-        return jsonify({"error": "Failed to fetch orgIndexCode"})
-
-    sign_str = f"POST\n*/*\napplication/json\nx-ca-key:{appKey}\nx-ca-nonce:{x_ca_nonce}\nx-ca-timestamp:{x_ca_timestamp}\n{api_add_person_url}"
-
-    signature = sign(appSecret, sign_str)
-
-    headers = {
-        "Accept": "*/*",
-        'Content-Type': 'application/json',
-        "x-ca-key": appKey,
-        "x-ca-signature-headers": "x-ca-key,x-ca-nonce,x-ca-timestamp",
-        "x-ca-signature": signature,
-        "x-ca-timestamp": x_ca_timestamp,
-        "x-ca-nonce": x_ca_nonce
-    }
-
-    data = []
-    for person1 in existing_person:
-        data.append({
-            "personName": person1.personname,
-            "gender": person1.gender,
-            "orgIndexCode": org_index_code,
-            "birthday": person1.birthday,
-            "phoneNo": person1.phoneno,
-            "email": person1.email,
-            "certificateType": person1.certificatetype,
-            "certificateNo": person1.certificateno,
-            "jobNo": person1.jobno,
-            "faces": [
-                {
-                    "faceData": person1.faces
-                }
-            ]
-        })
-    
-    print (data)
-    return headers, data
+ #发送组织请求头
 def get_root_org():
     appKey = "22932116"
     sign_str = f"POST\n*/*\napplication/json\nx-ca-key:{appKey}\nx-ca-nonce:{x_ca_nonce}\nx-ca-timestamp:{x_ca_timestamp}\n{api_add_person_url}"  
@@ -113,52 +70,7 @@ def get_root_org():
     
     return headers
 
-def get_org_index_code():
-    # Make a request to the /api/resource/v1/org/rootOrg endpoint to get orgIndexCode
-    response = app.test_client().post(api_origin_url, headers=get_root_org())
-    org_data = response.get_json()
-
-    if "data" in org_data:
-        return org_data["data"][0]["orgIndexCode"]
-    else:
-        return None
-    
-@app.route(api_add_person_url, methods=['POST'])
-def simulate_request_route():
-    existingperson = person.query.all()
-    headers, data = simulate_api_request()
-
-    xcakey = headers.get('x-ca-key')
-    xcasignatureheaders = headers.get('x-ca-signature-headers')
-    xcasignature = headers.get('x-ca-signature')
-    xcatimestamp = headers.get('x-ca-timestamp')
-    xcanonce = headers.get('x-ca-nonce')
-
-    sign_str = f"POST\n*/*\napplication/json\nx-ca-key:{xcakey}\nx-ca-nonce:{xcanonce}\nx-ca-timestamp:{xcatimestamp}\n{api_add_person_url}"
-
-    if (
-        xcakey != "22932116" or
-        xcasignatureheaders != "x-ca-key,x-ca-nonce,x-ca-timestamp" or
-        xcasignature != sign(appSecret, sign_str) or
-        xcatimestamp != x_ca_timestamp or
-        xcanonce != x_ca_nonce
-    ):
-        return jsonify({"error": f"请求失败，状态不正确"})
-
-    # Handle data separately
-
-    result = []
-    for person2 in existingperson:
-        result.append({
-            "personId": person2.personid,
-            "faceId": person2.facesid,
-        })
-    return {
-    "code": "0",
-    "msg": "success",
-    "data": result
-}
-
+#接受获取组织列表请求    
 @app.route(api_origin_url, methods=['POST'])
 def orign_request_route():
     headers = get_root_org()
@@ -176,7 +88,7 @@ def orign_request_route():
         xcatimestamp != x_ca_timestamp or
         xcanonce != x_ca_nonce
     ):
-        return jsonify({"error": f"请求失败，状态不正确"})
+        return jsonify({"error": f"0"})
     
     org = Org.query.all()
     body = []  
@@ -197,6 +109,106 @@ def orign_request_route():
         "data": body
     }
     
+#返回组织列表函数
+def get_org_index_code():
+
+    response = app.test_client().post(api_origin_url, headers=get_root_org())
+    org_data = response.get_json()
+
+    if "data" in org_data:
+         return [org["orgIndexCode"] for org in org_data["data"]]
+    else:
+        return None
+
+
+
+#请求头生成函数
+def simulate_api_request():
+    existing_person = person.query.all()
+    appKey = "22932116"
+    #得到组织列表
+    org_index_code = get_org_index_code()
+    if org_index_code is None:
+        return jsonify({"error": "0"})
+    #需要添加第一次的情况，向空表中添加组织列表等信息（再写一个函数）
+    sign_str = f"POST\n*/*\napplication/json\nx-ca-key:{appKey}\nx-ca-nonce:{x_ca_nonce}\nx-ca-timestamp:{x_ca_timestamp}\n{api_add_person_url}"
+    signature = sign(appSecret, sign_str)
+
+#请求头信息
+    headers = {
+        "Accept": "*/*",
+        'Content-Type': 'application/json',
+        "x-ca-key": appKey,
+        "x-ca-signature-headers": "x-ca-key,x-ca-nonce,x-ca-timestamp",
+        "x-ca-signature": signature,
+        "x-ca-timestamp": x_ca_timestamp,
+        "x-ca-nonce": x_ca_nonce
+    }
+    data = []
+    for person1 in existing_person: 
+        if person1.orgindexcode in org_index_code:
+            data.append({
+                "personName": person1.personname,
+                "gender": person1.gender,
+                "orgIndexCode": person1.orgindexcode,
+                "birthday": person1.birthday,
+                "phoneNo": person1.phoneno,
+                "email": person1.email,
+                "certificateType": person1.certificatetype,
+                "certificateNo": person1.certificateno,
+                "jobNo": person1.jobno,
+                "faces": [
+                        {
+                            "faceData": person1.faces
+                        }
+                    ]
+                })
+
+        if not data:
+            return jsonify({"error": "0"})
+        #这里缺少组织不存在的情况
+        else:
+            return headers, data
+        
+
+#接受获取人员列表请求    
+@app.route(api_add_person_url, methods=['POST'])
+def simulate_request_route():
+    existingperson = person.query.all()
+    headers, data = simulate_api_request()
+    
+    xcakey = headers.get('x-ca-key')
+    xcasignatureheaders = headers.get('x-ca-signature-headers')
+    xcasignature = headers.get('x-ca-signature')
+    xcatimestamp = headers.get('x-ca-timestamp')
+    xcanonce = headers.get('x-ca-nonce')
+
+    sign_str = f"POST\n*/*\napplication/json\nx-ca-key:{xcakey}\nx-ca-nonce:{xcanonce}\nx-ca-timestamp:{xcatimestamp}\n{api_add_person_url}"
+
+    if (
+        xcakey != "22932116" or
+        xcasignatureheaders != "x-ca-key,x-ca-nonce,x-ca-timestamp" or
+        xcasignature != sign(appSecret, sign_str) or
+        xcatimestamp != x_ca_timestamp or
+        xcanonce != x_ca_nonce
+    ):
+        return jsonify({"error": f"0"})
+
+    
+
+    result = []
+    for person2 in existingperson:
+        result.append({
+            "personId": person2.personid,
+            "faceId": person2.facesid,
+        })
+    return {
+    "code": "0",
+    "msg": "success",
+    "data": result
+}
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
