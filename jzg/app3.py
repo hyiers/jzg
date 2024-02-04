@@ -108,7 +108,8 @@ def orign_request_route():
         "msg": "success",
         "data": body
     }
-    
+
+
 #返回组织列表函数
 def get_org_index_code():
 
@@ -144,6 +145,7 @@ def simulate_api_request():
         "x-ca-timestamp": x_ca_timestamp,
         "x-ca-nonce": x_ca_nonce
     }
+    
     data = []
     for person1 in existing_person: 
         if person1.orgindexcode in org_index_code:
@@ -169,7 +171,7 @@ def simulate_api_request():
         #这里缺少组织不存在的情况
         else:
             return headers, data
-        
+ 
 
 #接受获取人员列表请求    
 @app.route(api_add_person_url, methods=['POST'])
@@ -194,7 +196,7 @@ def simulate_request_route():
     ):
         return jsonify({"error": f"0"})
 
-    
+
 
     result = []
     for person2 in existingperson:

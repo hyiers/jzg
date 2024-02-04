@@ -27,7 +27,7 @@ class person(db.Model):
     facesid = db.Column(db.String, nullable=True)
 
 class Org(db.Model):
-    __tablename__ = 'org1'
+    __tablename__ = 'org'
     orgindexcode = db.Column(db.String, primary_key=True)
     orgno = db.Column(db.String, nullable=True)
     orgname = db.Column(db.String, nullable=True)
@@ -136,12 +136,12 @@ def add_data_to_org():
     if not Org.query.first():
 
         new_org = Org(
-            orgindexcode="sample_org_code",
-            orgno="sample_org_no",
-            orgname="Sample Organization",
-            orgpath="/sample/path",
-            parentorgindexcode="sample_parent_code",
-            parentorgname="Sample Parent Org",
+            orgindexcode="1234567890",
+            orgno=" ",
+            orgname=" ",
+            orgpath=" ",
+            parentorgindexcode=" ",
+            parentorgname=" ",
             updatetime="2024-02-04" 
         )
         db.session.add(new_org)
@@ -169,39 +169,46 @@ def simulate_api_request():
     }
     data = []
     for person1 in existing_person: 
-        if person1.orgindexcode in org_index_code:
-            data.append({
-                "personName": person1.personname,
-                "gender": person1.gender,
-                "orgIndexCode": person1.orgindexcode,
-                "birthday": person1.birthday,
-                "phoneNo": person1.phoneno,
-                "email": person1.email,
-                "certificateType": person1.certificatetype,
-                "certificateNo": person1.certificateno,
-                "jobNo": person1.jobno,
-                "faces": [
-                        {
-                            "faceData": person1.faces
-                        }
-                    ]
-                })
+        if person1.orgindexcode not in org_index_code:
+            
+            new_org = Org(
+                orgindexcode=person1.orgindexcode,
+                orgno=" ",
+                orgname=" ",
+                orgpath=" ",
+                parentorgindexcode=" ",
+                parentorgname=" ",
+                updatetime=" "
+            )
+            db.session.add(new_org)
+            db.session.commit()
 
-        if not data:
-            raise Exception("No data found")
-        #这里缺少组织不存在的情况
-        else:
-            return headers, data
+            org_index_code.append(person1.orgindexcode)
+        data.append({
+            "personName": person1.personname,
+            "gender": person1.gender,
+            "orgIndexCode": person1.orgindexcode,
+            "birthday": person1.birthday,
+            "phoneNo": person1.phoneno,
+            "email": person1.email,
+            "certificateType": person1.certificatetype,
+            "certificateNo": person1.certificateno,
+            "jobNo": person1.jobno,
+            "faces": [{"faceData": person1.faces}]
+        })
+
+    return headers, data
  
 
 #接受获取人员列表请求    
 @app.route(api_add_person_url, methods=['POST'])
 def simulate_request_route():
     existingperson = person.query.all()
-    try:
-        headers, data = simulate_api_request()
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    headers, data = simulate_api_request()
+
+    if headers is None:
+        return data  # Return the error response
+
     xcakey = headers.get('x-ca-key')
     xcasignatureheaders = headers.get('x-ca-signature-headers')
     xcasignature = headers.get('x-ca-signature')
