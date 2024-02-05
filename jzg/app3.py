@@ -5,6 +5,8 @@ import time
 import hmac
 import hashlib
 import base64
+from sqlalchemy.orm import class_mapper
+import json
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:123456@localhost:5432/pt"
@@ -35,6 +37,8 @@ class Org(db.Model):
     parentorgindexcode = db.Column(db.String, nullable=True)
     parentorgname = db.Column(db.String, nullable=True)
     updatetime = db.Column(db.String, nullable=True)
+def org_to_dict(org):
+    return {column.key: getattr(org, column.key) for column in class_mapper(org.__class__).mapped_table.c}
 
 with app.app_context():
     db.create_all()
@@ -42,7 +46,7 @@ with app.app_context():
 #使用的AS，URL
 appSecret = "GSCOsNc7EMA61FfjE"
 api_add_person_url = "/api/resource/v2/person/single/add"
-api_origin_url = "/api/resource/v1/org/rootOrg"
+api_origin_url = "/api/resource/v1/org/orgList"
 #时间戳等信息
 x_ca_nonce = str(uuid.uuid4())
 x_ca_timestamp = str(int(round(time.time()) * 1000))
@@ -89,38 +93,43 @@ def orign_request_route():
         xcanonce != x_ca_nonce
     ):
         return jsonify({"error": f"0"})
-    
-    org = Org.query.all()
-    body = []  
-    for org_data in org:
-        body.append({
-            "orgIndexCode": org_data.orgindexcode,
-            "orgNo": org_data.orgno,
-            "orgName": org_data.orgname,
-            "orgPath": org_data.orgpath,
-            "parentOrgIndexCode": org_data.parentorgindexcode,
-            "parentOrgName": org_data.parentorgname,
-            "updateTime": org_data.updatetime
-        })
 
-    return {
+    pageNo = 1
+    pageSize = 10
+    orgs = Org.query.all()
+    start_index = (pageNo - 1) * pageSize
+    end_index = start_index + pageSize
+    paginated_orgs = [org_to_dict(org) for org in orgs[start_index:end_index]]
+
+    result = {
         "code": "0",
-        "msg": "success",
-        "data": body
+        "msg": "ok",
+        "data": {
+            "total": len(orgs),
+            "pageNo": pageNo,
+            "pageSize": pageSize,
+            "list": paginated_orgs
+        }
     }
+
+    return jsonify(result)
 
 
 #返回组织列表函数
 def get_org_index_code():
-
     response = app.test_client().post(api_origin_url, headers=get_root_org())
     org_data = response.get_json()
 
-    if "data" in org_data:
-         return [org["orgIndexCode"] for org in org_data["data"]]
+    if isinstance(org_data, str):
+        try:
+            org_data = json.loads(org_data)
+        except json.JSONDecodeError:
+            return None
+
+    if org_data and "data" in org_data:
+        return [org["orgIndexCode"] for org in org_data["data"]]
     else:
         return None
-
 
 
 #请求头生成函数

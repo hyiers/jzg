@@ -5,6 +5,7 @@ import time
 import hmac
 import hashlib
 import base64
+from sqlalchemy.orm import class_mapper
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:123456@localhost:5432/pt"
@@ -35,6 +36,9 @@ class Org(db.Model):
     parentorgindexcode = db.Column(db.String, nullable=True)
     parentorgname = db.Column(db.String, nullable=True)
     updatetime = db.Column(db.String, nullable=True)
+
+def org_to_dict(org):
+    return {column.key: getattr(org, column.key) for column in class_mapper(org.__class__).mapped_table.c}
 
 with app.app_context():
     db.create_all()
@@ -73,17 +77,13 @@ def get_root_org():
 #接受获取组织列表请求    
 @app.route(api_origin_url, methods=['POST'])
 def orign_request_route():
-
     headers = get_root_org()
     xcakey = headers.get('x-ca-key')
     xcasignatureheaders = headers.get('x-ca-signature-headers')
     xcasignature = headers.get('x-ca-signature')
     xcatimestamp = headers.get('x-ca-timestamp')
     xcanonce = headers.get('x-ca-nonce')
-
-
     sign_str = f"POST\n*/*\napplication/json\nx-ca-key:{xcakey}\nx-ca-nonce:{xcanonce}\nx-ca-timestamp:{xcatimestamp}\n{api_add_person_url}"
-
 
     if (
         xcakey != "22932116" or
@@ -94,40 +94,33 @@ def orign_request_route():
     ):
         return jsonify({"error": f"0"})
 
-    add_data_to_org()
-
-
-    org = Org.query.all()
-    body = []
-
-    # Construct the response body with org data
-    for org_data in org:
-        body.append({
-            "orgIndexCode": org_data.orgindexcode,
-            "orgNo": org_data.orgno,
-            "orgName": org_data.orgname,
-            "orgPath": org_data.orgpath,
-            "parentOrgIndexCode": org_data.parentorgindexcode,
-            "parentOrgName": org_data.parentorgname,
-            "updateTime": org_data.updatetime
-        })
-
-    # Return the response with the constructed body
-    return {
+    pageNo = 1
+    pageSize = 10
+    orgs = Org.query.all()
+    start_index = (pageNo - 1) * pageSize
+    end_index = start_index + pageSize
+    paginated_orgs = [org_to_dict(org) for org in orgs[start_index:end_index]]
+    print(paginated_orgs)
+    result = {
         "code": "0",
-        "msg": "success",
-        "data": body
+        "msg": "ok",
+        "data": {
+            "total": len(orgs),
+            "pageNo": pageNo,
+            "pageSize": pageSize,
+            "list": paginated_orgs
+        }
     }
 
+    return jsonify(result)
 
 #返回组织列表函数
 def get_org_index_code():
-
     response = app.test_client().post(api_origin_url, headers=get_root_org())
     org_data = response.get_json()
 
     if "data" in org_data:
-         return [org["orgIndexCode"] for org in org_data["data"]]
+        return [org["orgindexcode"] for org in org_data["data"]["list"]]
     else:
         return None
 
