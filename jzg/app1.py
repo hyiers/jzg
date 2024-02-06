@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import uuid
 import time
@@ -15,9 +15,9 @@ db = SQLAlchemy(app)
 class person(db.Model):
     __tablename__ = 'person'
     personid = db.Column(db.String, primary_key=True)
-    personname = db.Column(db.String, nullable=True)
-    gender = db.Column(db.String, nullable=True)
-    orgindexcode = db.Column(db.String, nullable=True)
+    personname = db.Column(db.String, nullable=False)
+    gender = db.Column(db.String, nullable=False)
+    orgindexcode = db.Column(db.String, nullable=False)
     birthday = db.Column(db.String, nullable=True)
     phoneno = db.Column(db.String, nullable=True)
     email = db.Column(db.String, nullable=True)
@@ -93,6 +93,8 @@ def orign_request_route():
         xcanonce != x_ca_nonce
     ):
         return jsonify({"error": f"0"})
+    
+    add_data_to_org()
 
     pageNo = 1
     pageSize = 10
@@ -100,7 +102,7 @@ def orign_request_route():
     start_index = (pageNo - 1) * pageSize
     end_index = start_index + pageSize
     paginated_orgs = [org_to_dict(org) for org in orgs[start_index:end_index]]
-    print(paginated_orgs)
+  
     result = {
         "code": "0",
         "msg": "ok",
@@ -111,6 +113,7 @@ def orign_request_route():
             "list": paginated_orgs
         }
     }
+    
 
     return jsonify(result)
 

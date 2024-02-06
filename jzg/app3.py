@@ -6,7 +6,6 @@ import hmac
 import hashlib
 import base64
 from sqlalchemy.orm import class_mapper
-import json
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:123456@localhost:5432/pt"
@@ -117,19 +116,15 @@ def orign_request_route():
 
 #返回组织列表函数
 def get_org_index_code():
+
     response = app.test_client().post(api_origin_url, headers=get_root_org())
     org_data = response.get_json()
 
-    if isinstance(org_data, str):
-        try:
-            org_data = json.loads(org_data)
-        except json.JSONDecodeError:
-            return None
-
-    if org_data and "data" in org_data:
-        return [org["orgIndexCode"] for org in org_data["data"]]
+    if "data" in org_data:
+         return [org["orgIndexCode"] for org in org_data["data"]]
     else:
         return None
+
 
 
 #请求头生成函数
